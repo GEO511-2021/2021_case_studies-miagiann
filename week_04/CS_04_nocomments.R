@@ -8,11 +8,19 @@ farthest_airport = flights %>%
   arrange(desc(distance))%>%
   slice(1)%>%
   inner_join(airports, by=c("dest"="faa"))%>%
-  select(name)
+  select(name)%>%
 # convert data frame into single character value
-  as.character(farthest_airport)
+  as.character()
 
 View(farthest_airport)
+# using left join instead of inner join
+farthest_airport = flights %>%
+  select(distance, dest)%>%
+  arrange(desc(distance))%>%
+  slice(1)%>%
+  left_join(airports, by=c("dest"="faa"))%>%
+  select(name)%>%
+  as.character()
 
 #extra time
 airports %>%
@@ -21,6 +29,5 @@ airports %>%
   borders("world") +
   geom_point(col="pink") +
   coord_quickmap()
-
-
+  
 
