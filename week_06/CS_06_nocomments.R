@@ -1,77 +1,44 @@
----
-title: "Case Study 06"
-author: Mia Giannini
-date: October 12, 2021
-output: github_document
----
-
-# Load Packages
-
-```{r, message = FALSE}
 library(raster)
 library(sp)
 library(spData)
 library(tidyverse)
 library(sf)
-library(dplyr)
-```
 
-# Prepare country data (filter to remove antarctica and transform to sp format)
-
-```{r}
 data(world)  #load 'world' data from spData package
+
 world = filter(world, subregion != "Antarctica")
-
+## transform world to sp format
 as(world, "Spatial")
-```
 
-# Download and load WorldClim Data
-
-```{r}
+## download and load WorldClim
 tmax_monthly <- getData(name = "worldclim", var="tmax", res=10)
-```
-
-# Use gain to convert to Degrees Celsius
-
-```{r}
+plot(tmax_monthly)
+## convert to Celsius
 gain(tmax_monthly) <- 0.1
-```
+plot(tmax_monthly)
 
-# Create new object called tmax_annual
-
-```{r}
+## create new object called tmax_annual
 tmax_annual = max(tmax_monthly)
 names(tmax_annual)<- "tmax"
-```
+plot(tmax_annual)
 
-# Use raster to extract max temp in each country and convert to sf format
-
-```{r}
+## calculate max temp in each country
 max_temp_country = raster::extract(tmax_annual, world, fun=max, na.rm=T, small=T, sp=T)
-
+## transform to sf format
 max_temp_country = st_as_sf(max_temp_country)
-```
 
-# Communicate your results using ggplot
-
-```{r}
-max_temp_plot = ggplot(data = max_temp_country)+
+## communicate your results
+ggplot(data = max_temp_country)+
   geom_sf(aes(fill= tmax))+
   scale_fill_viridis_c(name = "Annual\nMaximum\nTemperature (C)")+
   theme(legend.position = "bottom")
 
-max_temp_plot
-```
-
-# Create Summary Table and Print Results
-
-```{r}
+## create a summary
+library(dplyr)
 hottest_country = max_temp_country %>%
   group_by(continent)%>%
   top_n(tmax, n=1)%>%
   select(name_long, continent, tmax)%>%
   arrange(desc(tmax))%>%
   st_set_geometry(NULL)
-
 hottest_country
-```
