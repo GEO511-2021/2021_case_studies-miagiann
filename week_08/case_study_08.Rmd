@@ -1,7 +1,53 @@
 ---
 title: "Case Study 08"
-author: Your Name
-date: August 1, 2020
-output: github_document
+author: Mia Giannini
+date: October 26, 2021
+output: html_document: default
+  github_document: default
+  powerpoint_presentation: default
+  word_document: default
+  
 ---
+ # load packages
+```{r}
+ library(tidyverse)
+ library(knitr)
+ library(kableExtra)
+ library(dplyr)
+```
+
+ # Read in the data and skip beginning
+```{r, results='hide',message=FALSE, echo=F}
+dataurl = "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.txt"
+mean = read_table(dataurl)
+co2mean = read_table(dataurl,
+skip =56)
+```
+
+# plot a time series of co2 levels through time and rename column in co2mean
+```{r, results='hide',message=FALSE, echo=F}
+colnames(co2mean)[1]= "Year"
+colnames(co2mean)[2]= "Mean"
+colnames(co2mean)[3]= "unc"
+colnames(co2mean)[4]="N/A"
+
+ggplot(co2mean, aes(x= Year, y = Mean))+
+geom_point()+
+  geom_line()
+```
+
+ # add a table below the graph
+```{r, results='hide',message=FALSE, echo=F}
+ top5 = co2mean %>%
+  arrange(desc(co2mean, "Year")) %>%
+  filter (Year> "2015")
+
+ knitr::kable(top5)
+```
+ 
+#render all outputs in YAML in console
+```{r, results='hide',message=FALSE, echo=F}
+ # rmarkdown::render(file, output_format = "all")
+```
+ 
  
