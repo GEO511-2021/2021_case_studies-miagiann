@@ -2,7 +2,8 @@
 title: "Case Study 08"
 author: Mia Giannini
 date: October 26, 2021
-output: html_document: default
+output: 
+  html_document: default
   github_document: default
   powerpoint_presentation: default
   word_document: default
