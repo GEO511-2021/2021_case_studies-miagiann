@@ -24,7 +24,7 @@ lst_url="https://github.com/adammwilson/DataScienceData/blob/master/inst/extdata
 ```
 
 # Download data and load into R
-```{r, message = FALSE, error = FALSE, warning = FALSE, results = hide}
+```{r, message = FALSE, error = FALSE, warning = FALSE}
 download.file(lulc_url,destfile="data/MCD12Q1.051_aid0001.nc", mode="wb")
 download.file(lst_url,destfile="data/MOD11A2.006_aid0001.nc", mode="wb")
 
@@ -87,7 +87,7 @@ gplot(lulc)+
                     labels=levels(lulc)[[1]]$landcover,
                     name="Landcover Type")+
   coord_equal()+
-  theme(legend.position = "bottom")+
+  theme(legend.position = "right")+
   guides(fill=guide_legend(ncol=1,byrow=TRUE))
 ```
 

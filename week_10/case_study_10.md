@@ -151,7 +151,7 @@ gplot(lulc)+
                     labels=levels(lulc)[[1]]$landcover,
                     name="Landcover Type")+
   coord_equal()+
-  theme(legend.position = "bottom")+
+  theme(legend.position = "right")+
   guides(fill=guide_legend(ncol=1,byrow=TRUE))
 ```
 
@@ -218,7 +218,7 @@ ggplot(data = extractpoint, aes(x = date, y = V1))+
 
 ![](case_study_10_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
-\#PART 2
+# PART 2
 
 ``` r
 tmonth = as.numeric(format(getZ(lst),"%m"))
