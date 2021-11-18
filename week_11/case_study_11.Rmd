@@ -1,7 +1,63 @@
 ---
 title: "Case Study 11"
-author: Your Name
-date: August 1, 2020
+author: Mia Giannini
+date: November 18, 2021
 output: github_document
 ---
- 
+# Load Packages
+```{r}
+ library(tidyverse)
+library(spData)
+library(sf)
+library(sp)
+library(mapview)
+library(foreach)
+library(doParallel)
+library(tidycensus)
+library(raster)
+library(dplyr)
+```
+
+```{r}
+registerDoParallel(4)
+getDoParWorkers()
+```
+
+# Census API key
+```{r}
+census_api_key(Sys.getenv("CENSUS_API_KEY"), install = TRUE, overwrite = TRUE)
+readRenviron("~/.Renviron")
+```
+
+# Download Block Level Data on Race
+```{r}
+racevars <- c(White = "P005003", 
+              Black = "P005004", 
+              Asian = "P005006", 
+              Hispanic = "P004003")
+
+options(tigris_use_cache = TRUE)
+erie <- get_decennial(geography = "block", variables = racevars, 
+                      state = "NY", county = "Erie County", geometry = TRUE,
+                      summary_var = "P001001", cache_table=T) 
+```
+
+# Crop County-level Data
+```{r}
+erie_crop <- st_crop(erie,xmin=-78.9,xmax=-78.85,ymin=42.888,ymax=42.92)
+```
+
+# Write foreach loop 
+```{r}
+racial_group <- foreach(r=unique(erie_crop$variable),.combine=rbind) %dopar%{
+    filter(erie_crop,variable==r) %>%
+    st_sample(size =.$value) %>%
+    st_as_sf() %>%
+    mutate(variable=r)
+}
+```
+
+# Map
+```{r}
+mapview(racial_group, zcol="variable", cex=0.1, alpha = 0)
+```
