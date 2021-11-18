@@ -1,7 +1,34 @@
 ---
 title: "Case Study 07"
-author: Your Name
-date: August 1, 2020
+author: Mia Giannini
+date: October 19, 2020
 output: github_document
 ---
- 
+# Load Packages
+```{r}
+library(tidyverse)
+library(reprex)
+library(sf)
+library(spData)
+library(reprex)
+library(ggplot2)
+```
+
+# Load data and run orginal plot with error
+```{r}
+data(world)
+ggplot(world, aes(x = gdpPercap, y = continent, color = continent))+
+  geom_density(alpha=0.5, color = F)
+```
+
+# Run reprex
+```{r}
+reprex(venue = "gh")
+```
+
+# Fix problem in code
+```{r}
+ggplot(world, aes(x = gdpPercap, color = continent, fill = continent))+
+  geom_density(alpha=0.5, color = F)+
+  theme(legend.position = "bottom")
+```

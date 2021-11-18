@@ -1,7 +1,151 @@
 ---
 title: "Case Study 10"
-author: Your Name
-date: August 1, 2020
+author: Mia Giannini
+date: November 9, 2021
 output: github_document
 ---
- 
+# Load Packages
+```{r, message = FALSE, error = FALSE}
+library(raster)
+library(rasterVis)
+library(rgdal)
+library(ggmap)
+library(tidyverse)
+library(knitr)
+library(ncdf4)
+```
+
+# Create new folder
+```{r, message = FALSE, error = FALSE}
+dir.create("data",showWarnings = F)
+
+lulc_url="https://github.com/adammwilson/DataScienceData/blob/master/inst/extdata/appeears/MCD12Q1.051_aid0001.nc?raw=true"
+lst_url="https://github.com/adammwilson/DataScienceData/blob/master/inst/extdata/appeears/MOD11A2.006_aid0001.nc?raw=true"
+```
+
+# Download data and load into R
+```{r, message = FALSE, error = FALSE, warning = FALSE}
+download.file(lulc_url,destfile="data/MCD12Q1.051_aid0001.nc", mode="wb")
+download.file(lst_url,destfile="data/MOD11A2.006_aid0001.nc", mode="wb")
+
+lulc=stack("data/MCD12Q1.051_aid0001.nc",varname="Land_Cover_Type_1")
+lst=stack("data/MOD11A2.006_aid0001.nc",varname="LST_Day_1km")
+```
+
+# Plot and explore data
+```{r}
+plot(lulc)
+
+lulc=lulc[[13]]
+plot(lulc)
+```
+
+# Process land cover data
+```{r, message = FALSE, error =FALSE}
+Land_Cover_Type_1 = c(
+  Water = 0, 
+  `Evergreen Needleleaf forest` = 1, 
+  `Evergreen Broadleaf forest` = 2,
+  `Deciduous Needleleaf forest` = 3, 
+  `Deciduous Broadleaf forest` = 4,
+  `Mixed forest` = 5, 
+  `Closed shrublands` = 6,
+  `Open shrublands` = 7,
+  `Woody savannas` = 8, 
+  Savannas = 9,
+  Grasslands = 10,
+  `Permanent wetlands` = 11, 
+  Croplands = 12,
+  `Urban & built-up` = 13,
+  `Cropland/Natural vegetation mosaic` = 14, 
+  `Snow & ice` = 15,
+  `Barren/Sparsely vegetated` = 16, 
+  Unclassified = 254,
+  NoDataFill = 255)
+
+lcd=data.frame(
+  ID=Land_Cover_Type_1,
+  landcover=names(Land_Cover_Type_1),
+  col=c("#000080","#008000","#00FF00", "#99CC00","#99FF99", "#339966", "#993366", "#FFCC99", "#CCFFCC", "#FFCC00", "#FF9900", "#006699", "#FFFF00", "#FF0000", "#999966", "#FFFFFF", "#808080", "#000000", "#000000"),
+  stringsAsFactors = F)
+
+kable(head(lcd))
+```
+
+# Convert to raster and update with leftjoin
+```{r}
+lulc=as.factor(lulc)
+
+levels(lulc)=left_join(levels(lulc)[[1]],lcd)
+```
+
+# plot it
+```{r}
+gplot(lulc)+
+  geom_raster(aes(fill=as.factor(value)))+
+  scale_fill_manual(values=levels(lulc)[[1]]$col,
+                    labels=levels(lulc)[[1]]$landcover,
+                    name="Landcover Type")+
+  coord_equal()+
+  theme(legend.position = "right")+
+  guides(fill=guide_legend(ncol=1,byrow=TRUE))
+```
+
+# land surface temp
+```{r, message=FALSE, error = FALSE}
+plot(lst[[1:12]])
+```
+
+# convert lst to degrees c 
+```{r, message = FALSE, error = FALSE}
+offs(lst)=-273.15
+plot(lst[[1:10]])
+```
+
+# add dates to z (time) dimension
+```{r, message = FALSE, error=FALSE}
+names(lst)[1:5]
+tdates=names(lst)%>%
+  sub(pattern="X",replacement="")%>%
+  as.Date("%Y.%m.%d")
+
+names(lst)=1:nlayers(lst)
+lst=setZ(lst,tdates)
+```
+
+# PART 1
+```{r, message=FALSE, error=FALSE, warning = FALSE}
+lw=SpatialPoints(data.frame(x= -78.791547,y=43.007211))
+projection(lw)= "+proj=longlat"
+projection1 = projection(lst)
+spTransform(lw, projection1)
+extractpoint = raster :: extract(lst, lw, buffer = 1000, fun = mean, na.rm=T) %>%
+  t()%>%
+  as.data.frame()%>%
+  mutate(date= getZ(lst))
+
+ggplot(data = extractpoint, aes(x = date, y = V1))+
+  geom_point()+
+  geom_smooth(span = 0.01, n = 100)
+```
+
+# PART 2
+```{r}
+tmonth = as.numeric(format(getZ(lst),"%m"))
+
+lst_month = stackApply(lst, indices = tmonth, fun = "mean")
+
+# set names of the layers to months
+names(lst_month)=month.name
+
+rasterVis::gplot(lst_month) +
+  geom_tile(aes(fill = value)) +
+  facet_wrap(~ variable) +
+  scale_fill_gradient(low = "yellow", high = "red") +
+  coord_equal()+
+  theme_void()
+
+monthly_mean = cellStats(lst_month,mean)
+monthly_meandf = as.data.frame(monthly_mean)
+print(monthly_meandf)
+```
